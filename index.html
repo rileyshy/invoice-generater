@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revved Up Invoice</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            #page1 { display: none; }
+            #page2 { display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto">
+        <div id="page1" class="bg-white p-8 rounded-xl shadow-lg border border-gray-300 mb-6">
+            <img src="https://neonix.novaflex.shop/assets/img/revved-up-png.png" alt="Revved Up Logo" class="w-32 mb-4">
+            <h2 class="text-3xl font-bold text-blue-700 mb-2">Editable Invoice</h2>
+            <label class="block font-semibold">Client Name:</label>
+            <input type="text" id="clientName" placeholder="Enter client name" class="border p-2 w-full mb-3">
+            <label class="block font-semibold">Invoice Date:</label>
+            <input type="date" id="invoiceDate" class="border p-2 w-full mb-3">
+            <h3 class="text-xl font-semibold my-2">Items</h3>
+            <table class="w-full border-collapse border border-gray-300 text-gray-800">
+                <thead>
+                    <tr class="bg-blue-700 text-white">
+                        <th class="border p-3 text-left">Item Name</th>
+                        <th class="border p-3 text-left">Description</th>
+                        <th class="border p-3 text-right">Amount (£)</th>
+                    </tr>
+                </thead>
+                <tbody id="items" class="text-gray-700"></tbody>
+            </table>
+            <button onclick="addItem()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600">Add Item</button>
+        </div>
+
+        <div id="page2" class="hidden bg-white p-8 rounded-xl shadow-lg border border-gray-300">
+            <h2 class="text-4xl font-bold text-blue-700">Revved Up Invoice</h2>
+            <h3 class="text-lg font-semibold">Bill To: <span id="finalClientName" class="text-gray-800"></span></h3>
+            <h3 class="text-lg font-semibold">Invoice Date: <span id="finalInvoiceDate"></span></h3>
+            <h3 class="text-xl font-semibold mt-4">Items</h3>
+            <table class="w-full border-collapse border border-gray-300 text-gray-800">
+                <thead>
+                    <tr class="bg-blue-700 text-white">
+                        <th class="border p-3 text-left">Item Name</th>
+                        <th class="border p-3 text-left">Description</th>
+                        <th class="border p-3 text-right">Amount (£)</th>
+                    </tr>
+                </thead>
+                <tbody id="finalItems" class="text-gray-700"></tbody>
+            </table>
+            <div class="mt-4 text-right">
+                <h3 class="text-lg font-semibold">Total: £<span id="finalTotal">0.00</span></h3>
+            </div>
+
+            <!-- Terms of Service -->
+            <div class="mt-6 text-sm text-gray-600 border-t pt-4">
+                <h3 class="font-bold text-blue-700">Terms of Service</h3>
+                <p>By using Revved Up’s services, you agree to the following terms:</p>
+                <p><a href="https://revvedup.novaflex.shop/tos" target="_blank" class="text-blue-500 underline">Read our Terms of Service</a></p>
+                <p class="text-xs text-gray-500">Invoice generated at <span id="invoiceTime"></span></p>
+            </div>
+        </div>
+
+        <button onclick="generatePDF()" class="mt-4 bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">Download PDF</button>
+    </div>
+
+    <script>
+        let items = [];
+
+        function addItem() {
+            const itemName = prompt("Enter item name:");
+            const desc = prompt("Enter item description:");
+            const price = parseFloat(prompt("Enter item price:")) || 0;
+            if (itemName && desc && price > 0) {
+                items.push({ itemName, desc, price });
+                renderItems();
+            }
+        }
+
+        function renderItems() {
+            const tbody = document.getElementById("items");
+            tbody.innerHTML = "";
+            items.forEach((item) => {
+                tbody.innerHTML += `<tr class='border'>
+                    <td class='border p-3 text-left'>${item.itemName}</td>
+                    <td class='border p-3 text-left'>${item.desc}</td>
+                    <td class='border p-3 text-right'>£${item.price.toFixed(2)}</td>
+                </tr>`;
+            });
+        }
+
+        function generatePDF() {
+            document.getElementById("finalClientName").innerText = document.getElementById("clientName").value || "N/A";
+            document.getElementById("finalInvoiceDate").innerText = document.getElementById("invoiceDate").value || "N/A";
+            document.getElementById("invoiceTime").innerText = new Date().toLocaleTimeString();
+
+            const finalTbody = document.getElementById("finalItems");
+            finalTbody.innerHTML = "";
+            items.forEach((item) => {
+                finalTbody.innerHTML += `<tr class='border'>
+                    <td class='border p-3 text-left'>${item.itemName}</td>
+                    <td class='border p-3 text-left'>${item.desc}</td>
+                    <td class='border p-3 text-right'>£${item.price.toFixed(2)}</td>
+                </tr>`;
+            });
+            document.getElementById("finalTotal").innerText = items.reduce((sum, item) => sum + item.price, 0).toFixed(2);
+
+            document.getElementById("page2").classList.remove("hidden");
+            html2pdf().from(document.getElementById("page2")).save("RevvedUp_Invoice.pdf");
+        }
+    </script>
+</body>
+</html>
